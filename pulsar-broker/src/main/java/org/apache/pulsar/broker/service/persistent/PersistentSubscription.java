@@ -310,7 +310,7 @@ public class PersistentSubscription extends AbstractSubscription {
                     if (consumer.subType() != dispatcher.getType()) {
                         return FutureUtil.failedFuture(
                                 new SubscriptionBusyException("Subscription is of different type"));
-                    } else {
+                    } else if (dispatcher.getType() == SubType.Key_Shared) {
                         KeySharedMeta dispatcherKsm = dispatcher.getConsumers().get(0).getKeySharedMeta();
                         KeySharedMeta consumerKsm = consumer.getKeySharedMeta();
                         if (dispatcherKsm.getKeySharedMode() != consumerKsm.getKeySharedMode()) {
