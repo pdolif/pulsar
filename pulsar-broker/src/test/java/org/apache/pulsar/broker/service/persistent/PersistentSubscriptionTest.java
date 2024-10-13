@@ -26,7 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import io.netty.channel.EventLoopGroup;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.apache.bookkeeper.common.util.OrderedExecutor;
 import org.apache.bookkeeper.mledger.AsyncCallbacks;
 import org.apache.bookkeeper.mledger.ManagedLedger;
 import org.apache.bookkeeper.mledger.ManagedLedgerConfig;
@@ -46,11 +44,10 @@ import org.apache.bookkeeper.mledger.impl.ManagedCursorContainer;
 import org.apache.bookkeeper.mledger.impl.ManagedCursorImpl;
 import org.apache.bookkeeper.mledger.impl.ManagedLedgerImpl;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.pulsar.broker.BrokerTestUtil;
 import org.apache.pulsar.broker.resources.NamespaceResources;
 import org.apache.pulsar.broker.service.BrokerServiceException.SubscriptionBusyException;
 import org.apache.pulsar.broker.service.Consumer;
-import org.apache.pulsar.broker.service.PendingAcksMap;
+import org.apache.pulsar.broker.service.SubscriptionTestBase;
 import org.apache.pulsar.broker.testcontext.PulsarTestContext;
 import org.apache.pulsar.broker.transaction.buffer.impl.InMemTransactionBufferProvider;
 import org.apache.pulsar.broker.transaction.pendingack.PendingAckStore;
@@ -61,20 +58,16 @@ import org.apache.pulsar.client.api.transaction.TxnID;
 import org.apache.pulsar.common.api.proto.CommandAck.AckType;
 import org.apache.pulsar.common.api.proto.CommandSubscribe;
 import org.apache.pulsar.common.api.proto.KeySharedMeta;
-import org.apache.pulsar.common.api.proto.KeySharedMode;
 import org.apache.pulsar.common.api.proto.TxnAction;
 import org.apache.pulsar.common.policies.data.Policies;
 import org.apache.pulsar.transaction.common.exception.TransactionConflictException;
 import org.awaitility.Awaitility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(groups = "broker")
-public class PersistentSubscriptionTest {
+public class PersistentSubscriptionTest extends SubscriptionTestBase {
 
     private PulsarTestContext pulsarTestContext;
     private ManagedLedger ledgerMock;
@@ -84,16 +77,8 @@ public class PersistentSubscriptionTest {
     private Consumer consumerMock;
     private ManagedLedgerConfig managedLedgerConfigMock;
 
-    final String successTopicName = "persistent://prop/use/ns-abc/successTopic";
-    final String subName = "subscriptionName";
-
     final TxnID txnID1 = new TxnID(1,1);
     final TxnID txnID2 = new TxnID(1,2);
-
-    private static final Logger log = LoggerFactory.getLogger(PersistentSubscriptionTest.class);
-
-    private OrderedExecutor executor;
-    private EventLoopGroup eventLoopGroup;
 
     @BeforeMethod
     public void setup() throws Exception {
@@ -242,42 +227,6 @@ public class PersistentSubscriptionTest {
         assertTrue(persistentSubscription.cursor.getLastActive() > beforeAcknowledgeTimestamp);
     }
 
-    @DataProvider(name = "incompatibleKeySharedPolicies")
-    public Object[][] incompatibleKeySharedPolicies() {
-        KeySharedMeta ksmSticky = new KeySharedMeta().setKeySharedMode(KeySharedMode.STICKY);
-        ksmSticky.addHashRange().setStart(0).setEnd(2);
-
-        KeySharedMeta ksmStickyAllowOutOfOrder = new KeySharedMeta().setKeySharedMode(KeySharedMode.STICKY)
-                .setAllowOutOfOrderDelivery(true);
-        ksmStickyAllowOutOfOrder.addHashRange().setStart(3).setEnd(5);
-
-        KeySharedMeta ksmAutoSplit = new KeySharedMeta().setKeySharedMode(KeySharedMode.AUTO_SPLIT);
-        KeySharedMeta ksmAutoSplitAllowOutOfOrder = new KeySharedMeta().setKeySharedMode(KeySharedMode.AUTO_SPLIT)
-                .setAllowOutOfOrderDelivery(true);
-
-        String errorMessageDifferentMode = "Subscription is of different key_shared mode";
-        String errorMessageOutOfOrderNotAllowed = "Subscription does not allow out of order delivery";
-        String errorMessageOutOfOrderAllowed = "Subscription allows out of order delivery";
-
-        return new Object[][] {
-                { ksmAutoSplit, ksmSticky, errorMessageDifferentMode },
-                { ksmAutoSplit, ksmStickyAllowOutOfOrder, errorMessageDifferentMode },
-                { ksmAutoSplit, ksmAutoSplitAllowOutOfOrder, errorMessageOutOfOrderNotAllowed },
-
-                { ksmAutoSplitAllowOutOfOrder, ksmSticky, errorMessageDifferentMode },
-                { ksmAutoSplitAllowOutOfOrder, ksmStickyAllowOutOfOrder, errorMessageDifferentMode },
-                { ksmAutoSplitAllowOutOfOrder, ksmAutoSplit, errorMessageOutOfOrderAllowed },
-
-                { ksmSticky, ksmStickyAllowOutOfOrder, errorMessageOutOfOrderNotAllowed },
-                { ksmSticky, ksmAutoSplit, errorMessageDifferentMode },
-                { ksmSticky, ksmAutoSplitAllowOutOfOrder, errorMessageDifferentMode },
-
-                { ksmStickyAllowOutOfOrder, ksmSticky, errorMessageOutOfOrderAllowed },
-                { ksmStickyAllowOutOfOrder, ksmAutoSplit, errorMessageDifferentMode },
-                { ksmStickyAllowOutOfOrder, ksmAutoSplitAllowOutOfOrder, errorMessageDifferentMode }
-        };
-    }
-
     @Test(dataProvider = "incompatibleKeySharedPolicies")
     public void testIncompatibleKeySharedPoliciesNotAllowed(KeySharedMeta consumer1Ksm, KeySharedMeta consumer2Ksm,
                                                             String expectedErrorMessage) throws Exception {
@@ -304,15 +253,6 @@ public class PersistentSubscriptionTest {
         }
 
         context.close();
-    }
-
-
-    private Consumer createKeySharedMockConsumer(String name, KeySharedMeta ksm) {
-        Consumer consumer = BrokerTestUtil.createMockConsumer(name);
-        doReturn(CommandSubscribe.SubType.Key_Shared).when(consumer).subType();
-        doReturn(ksm).when(consumer).getKeySharedMeta();
-        doReturn(mock(PendingAcksMap.class)).when(consumer).getPendingAcks();
-        return consumer;
     }
 
     public static class CustomTransactionPendingAckStoreProvider implements TransactionPendingAckStoreProvider {
