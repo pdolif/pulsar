@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import lombok.Getter;
 import lombok.Value;
 import org.apache.bookkeeper.client.BKException.BKNoSuchLedgerExistsException;
@@ -1355,10 +1356,16 @@ public class PersistentTopic extends AbstractTopic implements Topic, AddEntryCal
             }
         }
         // Unsubscribe compaction cursor and delete compacted ledger.
-        currentCompaction.thenCompose(__ -> {
+        if (!currentCompaction.isDone()) {
+            currentCompaction.completeExceptionally(new Exception("Topic is being deleted"));
+        }
+        currentCompaction.handle((__, ex) -> {
+            if (ex != null && !ex.getMessage().equals("Topic is being deleted")) {
+                throw new CompletionException(ex);
+            }
             asyncDeleteCursor(subscriptionName, unsubscribeFuture);
             return unsubscribeFuture;
-        }).thenAccept(__ -> {
+        }).thenCompose(Function.identity()).thenAccept(__ -> {
             try {
                 ((PulsarCompactorSubscription) subscription).cleanCompactedLedger();
             } catch (Exception ex) {
