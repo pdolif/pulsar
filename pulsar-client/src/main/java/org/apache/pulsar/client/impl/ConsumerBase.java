@@ -227,7 +227,10 @@ public abstract class ConsumerBase<T> extends HandlerState implements Consumer<T
         if (!conf.isAutoScaledReceiverQueueSizeEnabled()) {
             return;
         }
-        double usage = getMemoryLimitController().map(MemoryLimitController::currentUsagePercent).orElse(0d);
+        double usage = getMemoryLimitController()
+                .filter(MemoryLimitController::isMemoryLimited)
+                .map(MemoryLimitController::currentUsagePercent)
+                .orElse(0d);
         if (usage < MEMORY_THRESHOLD_FOR_RECEIVER_QUEUE_SIZE_EXPANSION
                  && scaleReceiverQueueHint.compareAndSet(true, false)) {
             int oldSize = getCurrentReceiverQueueSize();
