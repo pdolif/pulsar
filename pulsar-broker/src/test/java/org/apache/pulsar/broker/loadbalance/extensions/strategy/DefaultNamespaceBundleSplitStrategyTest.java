@@ -148,6 +148,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         doReturn(bundleStats).when(brokerService).getBundleStats();
     }
 
+    @Test
     public void testNamespaceBundleSplitConditionThreshold() {
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
         bundleStats.values().forEach(v -> v.msgRateIn = config.getLoadBalancerNamespaceBundleMaxMsgRate() + 1);
@@ -156,7 +157,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         assertEquals(actual.size(), 1);
     }
 
-
+    @Test
     public void testNotEnoughTopics() {
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
         bundleStats.values().forEach(v -> v.msgRateIn = config.getLoadBalancerNamespaceBundleMaxMsgRate() + 1);
@@ -167,6 +168,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         assertEquals(actual, expected);
     }
 
+    @Test
     public void testNamespaceMaximumBundles() throws Exception {
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
         bundleStats.values().forEach(v -> v.msgRateIn = config.getLoadBalancerNamespaceBundleMaxMsgRate() + 1);
@@ -177,6 +179,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         assertEquals(actual, expected);
     }
 
+    @Test
     public void testEmptyBundleStats() {
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
         bundleStats.values().forEach(v -> v.msgRateIn = config.getLoadBalancerNamespaceBundleMaxMsgRate() + 1);
@@ -187,6 +190,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         assertEquals(actual, expected);
     }
 
+    @Test
     public void testNoBundleOwner() {
         var counter = spy(new SplitCounter());
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
@@ -199,6 +203,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         verify(counter, times(0)).update(eq(SplitDecision.Label.Failure), eq(Unknown));
     }
 
+    @Test
     public void testError() throws Exception {
         var counter = spy(new SplitCounter());
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
@@ -211,6 +216,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         verify(counter, times(2)).update(eq(SplitDecision.Label.Failure), eq(Unknown));
     }
 
+    @Test
     public void testSplittingBundle() {
         var counter = spy(new SplitCounter());
         config.setLoadBalancerNamespaceBundleSplitConditionHitCountThreshold(0);
@@ -225,6 +231,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         verify(counter, times(0)).update(eq(SplitDecision.Label.Failure), eq(Unknown));
     }
 
+    @Test
     public void testMaxMsgRate() {
         var counter = spy(new SplitCounter());
         var strategy = new DefaultNamespaceBundleSplitStrategyImpl(counter);
@@ -260,6 +267,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         }
     }
 
+    @Test
     public void testMaxTopics() {
         var counter = spy(new SplitCounter());
         var strategy = new DefaultNamespaceBundleSplitStrategyImpl(counter);
@@ -292,6 +300,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         }
     }
 
+    @Test
     public void testMaxSessions() {
         var counter = spy(new SplitCounter());
         var strategy = new DefaultNamespaceBundleSplitStrategyImpl(counter);
@@ -327,6 +336,7 @@ public class DefaultNamespaceBundleSplitStrategyTest {
         }
     }
 
+    @Test
     public void testMaxBandwidthMbytes() {
         var counter = spy(new SplitCounter());
         var strategy = new DefaultNamespaceBundleSplitStrategyImpl(counter);

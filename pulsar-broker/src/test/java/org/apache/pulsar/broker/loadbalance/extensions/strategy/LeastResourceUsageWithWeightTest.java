@@ -73,6 +73,7 @@ public class LeastResourceUsageWithWeightTest {
         return ctx;
     }
 
+    @Test
     public void testSelect() {
 
         var ctx = setupContext();
@@ -119,6 +120,7 @@ public class LeastResourceUsageWithWeightTest {
         assertEquals(strategy.select(candidates, bundleData, ctx), Optional.of("3"));
     }
 
+    @Test
     public void testArithmeticException()
             throws NoSuchFieldException, IllegalAccessException {
         var ctx = setupContext();
@@ -137,6 +139,7 @@ public class LeastResourceUsageWithWeightTest {
         assertEquals(strategy.select(candidates, bundleData, ctx), Optional.of("1"));
     }
 
+    @Test
     public void testNoLoadDataBrokers() {
         var ctx = setupContext();
 
