@@ -46,6 +46,7 @@ import org.testng.annotations.Test;
 @Test(groups = "broker")
 public class ModularLoadManagerStrategyTest {
 
+    @Test
     public void testAvgShedderWithPreassignedBroker() throws Exception {
         ModularLoadManagerStrategy strategy = new AvgShedder();
         Field field = AvgShedder.class.getDeclaredField("bundleBrokerMap");
@@ -62,6 +63,7 @@ public class ModularLoadManagerStrategyTest {
         assertEquals(bundleBrokerMap.get(bundleData), "2");
     }
 
+    @Test
     public void testAvgShedderWithoutPreassignedBroker() throws Exception {
         ModularLoadManagerStrategy strategy = new AvgShedder();
         Field field = AvgShedder.class.getDeclaredField("bundleBrokerMap");
@@ -88,6 +90,7 @@ public class ModularLoadManagerStrategyTest {
     }
 
     // Test that least long term message rate works correctly.
+    @Test
     public void testLeastLongTermMessageRate() {
         BundleData bundleData = new BundleData();
         BrokerData brokerData1 = initBrokerData();
@@ -114,6 +117,7 @@ public class ModularLoadManagerStrategyTest {
     }
 
     // Test that least resource usage with weight works correctly.
+    @Test
     public void testLeastResourceUsageWithWeight() {
         BundleData bundleData = new BundleData();
         BrokerData brokerData1 = initBrokerData(10, 100);
@@ -192,6 +196,7 @@ public class ModularLoadManagerStrategyTest {
         assertEquals(strategy.selectBroker(candidates, bundleData, loadData, conf), Optional.of("3"));
     }
 
+    @Test
     public void testLeastResourceUsageWithWeightWithArithmeticException()
             throws NoSuchFieldException, IllegalAccessException {
         BundleData bundleData = new BundleData();
@@ -232,6 +237,7 @@ public class ModularLoadManagerStrategyTest {
         assertEquals(strategy.selectBroker(candidates, bundleData, loadData, conf), Optional.of("1"));
     }
 
+    @Test
     public void testRoundRobinBrokerSelector() throws IllegalAccessException {
         Set<String> brokers = new LinkedHashSet(Arrays.asList("1", "2", "3"));
         int n = brokers.size();
@@ -271,6 +277,7 @@ public class ModularLoadManagerStrategyTest {
         assertEquals(((AtomicInteger) FieldUtils.readDeclaredField(strategy, "count", true)).get(), 0);
     }
 
+    @Test
     public void testActiveBrokersChange() throws Exception {
         LoadData loadData = new LoadData();
         Map<String, BrokerData> brokerDataMap = loadData.getBrokerData();
