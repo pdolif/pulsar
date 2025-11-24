@@ -1833,6 +1833,18 @@ flexible messaging model and an intuitive client API.</description>
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.junit.support</groupId>
+      <artifactId>testng-engine</artifactId>
+      <version>1.0.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-engine</artifactId>
+      <version>1.10.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -1897,13 +1909,6 @@ flexible messaging model and an intuitive client API.</description>
             </property>
           </properties>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.surefire</groupId>
-            <artifactId>surefire-testng</artifactId>
-            <version>${surefire.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>
